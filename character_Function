@@ -1,0 +1,10 @@
+-- getting the names started with 'Q'
+
+-- (1)With like '%v'
+
+	SELECT * FROM customer
+	WHERE last_name LIKE 'q%';
+-- (2)left and right function
+
+	SELECT * FROM customer
+	WHERE LEFT(last_name,1)= 'q';
