@@ -1,0 +1,52 @@
+-- 3.8.1  Q.Find people having specific last name and first name 
+
+SELECT actor_id, last_name, first_name
+FROM actor
+WHERE last_name = 'williams' OR last_name = 'davis'
+
+-- where last_name in('williams','davis') 
+-- which can be slow down the speed using with Strings
+ORDER BY last_name, first_name;
+
+
+-- 3.8.3 Q.Find customers id visited this store at 2005.07.05
+
+SELECT distinct customer_id
+FROM rental
+WHERE DATE(rental_date) = '2005-07-05'
+ORDER BY customer_id;
+
+-- learning how to use the date() 
+-- which is converting time format with sec, min to YYYYMMDD
+
+
+-- 3.8.4 Q.Find email address rented st in this store from specific date (2005.06.14)
+SELECT c.email, r.return_date
+FROM customer c
+INNER JOIN rental r
+ON c.customer_id = r.customer_id
+WHERE DATE(r.rental_date) = '2005-06-14'
+ORDER BY return_date desc; -- ORDER BY r.return_date desc;
+
+-- With using Alias make it simplify like a variable in Java language 
+-- that is clearify where is the place referenced and in case that exist same columm in the tables 
+
+
+SELECT * FROM customer
+WHERE first_name = 'Allen'
+AND CREATE_date > '2006-01-01'; 
+
+-- Q. getting the value in the arrange the last name
+
+	 SELECT * FROM customer
+	 WHERE last_name BETWEEN 'fa' AND 'fr'
+	 ORDER BY last_name;
+	 
+	 
+	 SELECT 'fa'>='fr' FROM customer
+	 WHERE last_name;
+	 
+
+
+
+
