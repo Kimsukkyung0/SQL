@@ -1,0 +1,92 @@
+-- 5/10
+
+SELECT LAST_name, FIRST_name
+FROM customer
+WHERE LAST_name LIKE '_A_T%s';
+
+SELECT email , first_name, last_name
+FROM customer
+WHERE email LIKE '____.__________@%';
+
+-- Q.Find the text having . at fourth position and @ at 13th
+SELECT email , first_name, last_name
+FROM customer
+WHERE email LIKE '____.%' AND mid(email, 13,1) = '@';
+
+-- Q. Find the email address started with Q,Y 
+SELECT last_name, first_name
+FROM customer
+WHERE last_name LIKE 'Q%' OR last_name LIKE 'y%';
+
+-- Q. Find the email address started with Q,Y with regular expression
+SELECT *
+FROM customer
+WHERE last_name REGEXP '^[QY]';
+
+
+SELECT *
+FROM customer
+WHERE last_name REGEXP '^[E]$';
+
+SELECT * 
+FROM rental
+WHERE RETURN_date IS NULL;
+
+
+-- Not the return date is between 2005.5.1 ~ 2005.09.1 (not including 9.1)
+SELECT *
+FROM rental
+WHERE return_date 
+NOT between '2005-05-01' AND '2005-09-01' OR return_date IS NULL;
+
+-- p126
+
+SELECT *
+FROM payment
+WHERE payment_id BETWEEN 101 AND 120;
+
+-- 4.5.3 Example 4-3
+
+SELECT *
+from payment 
+WHERE amount IN (1.98,7.98,9.98);
+
+-- 4.5.4 Example 4-4
+Find the A at 2nd position in the text and having w later than A(whereever but not prior of A)
+
+SELECT *
+FROM customer 
+WHERE last_name LIKE '_A%w%' ;
+
+SELECT *
+FROM person;
+
+
+-- Finding common value with inner Join
+SELECT A.food, A.person_id, B.person_id, B.first_name, B.last_name
+FROM favorite_food A
+INNER JOIN person B
+ON A.person_id = B.person_id;
+
+-- LEFT JOIN
+SELECT *
+FROM person A -- from is the standard value. when it comes with join
+LEFT JOIN favorite_food B/
+ON a.person_id = b.person_id;
+
+--Print the customer id, fullname , address , district from the 2 different tables
+SELECT A.customer_id, A.first_name,A.last_name, B.address , B.district
+FROM customer A
+inner JOIN address B
+ON A.address_id = B.address_id;
+
+
+-- Print the customer id, fullname , city name from the 2 different tables
+-- double join
+
+SELECT A.customer_id, A.first_name,A.last_name, C.city
+FROM customer A
+inner JOIN address B
+ON A.address_id = B.address_id
+INNER JOIN city C
+ON B.city_id = C.city_id;
