@@ -1,0 +1,112 @@
+
+-- -- -- -- Printing the values having address district ='california'
+-- I did unnecessary multiple tasks with join and subquery. 
+
+SELECT *
+FROM customer A
+INNER JOIN address B
+ON A.address_id = B.address_id
+WHERE district IN
+(
+SELECT district 
+FROM address 
+WHERE district = 'california'
+);
+
+-- So, when it's too complicated to solve, first of all write the simple syntax first, and put in the query!
+SELECT * 
+FROM address
+WHERE district = 'California';
+
+--And this query can be placed in variable positions such as where in, = ( query )
+
+SELECT* FROM customer -- select all from customer table 
+WHERE address_id IN( -- where in 
+SELECT address_id FROM address -- select row from address table 
+WHERE district = 'California'
+);
+
+-- sub query using as a table 
+
+SELECT * FROM customer A
+INNER JOIN (
+	SELECT address_id FROM address
+	WHERE district = 'California'
+) B 
+
+-- when the query used as a table, should get the alias .
+
+ON A.address_id = B.address_id;
+
+-- find the films appeared Cate mcqueen, cuba birch 
+SELECT distinct A.* FROM film A -- distinct
+INNER JOIN film_actor B
+ON A.film_id = B.film_id
+INNER JOIN
+(SELECT *
+FROM actor_info
+WHERE (FIRST_name = 'CATE' and last_name = 'MCQuEEN' )
+OR (first_name = 'CUBA' AND last_name = 'BIRCH')
+
+-- where (first_name, last_name) in (('cate','mcqueen')('cuba','burch'))로 할수도잇슴 
+)C
+ON B.actor_id = C.actor_id
+ORDER BY title;
+
+-- films appeared both actors
+SELECT * FROM film F 
+INNER JOIN
+(
+	SELECT B.film_id FROM actor A
+	INNER JOIN film_actor B
+	ON A.actor_id = B.actor_id
+	WHERE (A.first_name, A.last_name) 
+	in (('CATE','MACQUEEN'),('CUBA','BIRCH'))
+	GROUP BY B.film_id
+	having COUNT(*) = 2
+) S -- used count() function!
+ON s.film_id = f.film_id;
+
+
+-- check 5-1
+SELECT c.first_name, c.last_name, a.address, ct.city
+FROM customer c
+INNER JOIN address a
+ON c.address_id = a.address_id
+INNER JOIN city ct
+ON a.city_id = ct.city_id
+WHERE a.district = 'California';
+
+-- check 5-2
+SELECT distinct F.*, ac.first_name FROM film F
+INNER JOIN film_actor FA
+ON F.film_id = FA.film_id
+INNER JOIN actor Ac
+ON Ac.actor_id = fa.actor_id
+WHERE first_name = 'john';
+
+
+-- check 5-3
+-- Return all the addresses in the same city (the value is over 1)
+SELECT a1.address addr1 , a2.address addr2
+	, a1.city_id, a2.city_id
+FROM address a1
+INNER JOIN address a2
+ON a1.city_id = a2.city_id
+where a1.address_id <> a2.address_id;
+
+-- 3-1
+SELECT address FROM address
+WHERE city_id IN (
+   SELECT city_id FROM address
+   GROUP BY city_id
+   HAVING COUNT(*) > 1
+);
+
+
+SELECT a1.address addr1, a2.address addr2
+         , a1.city_id, a2.city_id
+FROM address a1
+INNER JOIN address a2
+ON a1.city_id = a2.city_id
+WHERE a1.address_id <> a2.address_id;
