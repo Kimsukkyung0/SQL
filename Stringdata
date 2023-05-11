@@ -1,0 +1,161 @@
+--String data constructors(types)
+-- create the table to practice dealing with the character datas
+-- Double replace in one sentence / SubString
+
+--Types (char, varchar, text , longtext...etc)
+DROP TABLE string_tbl;
+CREATE TABLE string_tbl(
+	char_fld CHAR(30)
+	, vchar_fld VARCHAR(30)
+	, text_fld text 
+  
+  -- no need to set the limit but the speed of trans is comparative slow than other ones 
+);
+
+--Put the data in the table
+INSERT INTO string_tbl
+(char_fld, vchar_fld, text_fld)
+VALUES
+(
+'This is char data',
+'This is varchar data',
+'This is text data'
+);
+-- ----------------------------------------------------------------------------------------------------------
+
+-- Q.1 how if want to put the longer data than it allowed? and special characters(such as * , %, \ )
+-- SELECT * , with QUOTE(text_fld), it ultimately allows every characters to print 
+
+SELECT * , QUOTE(text_fld) FROM string_tbl;
+UPDATE string_tbl
+SET vchar_fld = 'This is not the varchar data so it shouldnt be put ';
+
+UPDATE string_tbl
+SET text_fld = 'This string didn''t WORK, but it does NOW';
+-- To use the character ' ,  should use double '' or \'
+-- result : 'This string didn't WORK, but it does NOW';
+
+-- Q.1-1 changing the mode to ansi (which is not recommanded because of unexpected errors)
+
+select @@session.sql_mode;
+SET sql_mode = 'ansi';
+
+-- -------------------------------------------------------------------------------------------------
+
+SET sql_mode = 'strict'; --didn't work very well in Mysql 
+SHOW WARNINGS;
+
+-- Q.2 merging characters (concat , char_length , position, locate)
+
+SELECT last_name, FIRST_name, CONCAT(last_name, FIRST_name)
+FROM person;
+
+-- length operator is only valid for english , if i want to use the proper length other language in the database, 
+-- should use UTF 8  and char_length
+
+SELECT last_name, CHAR_LENGTH(last_name) 
+FROM person;
+
+-- returning the int value of the number of rows containing 'ur' on the new column 
+
+SELECT last_name, POSITION('ur' IN LAST_name) 
+FROM person;
+
+SELECT * FROM string_tbl;
+
+-- POSITION () : which is the returning the location in the text .
+SELECT text_fld, POSITION('n' IN text_fld) 
+FROM string_tbl;
+
+-- LOCATION () : text 
+SELECT text_fld, POSITION('n' IN text_fld), LOCATE('n', text_fld,12)
+FROM string_tbl; 
+
+-- ------------------------------------------------------------------------------------------------------------
+
+-- Q3.comparing strings (if its true, returnning '1' not like Java script)
+	
+SELECT '안녕' = '안녕'
+		, 'abc' = 'ABC'
+		, 'abc' = 'cba'
+		, STRCMP ('abc','ABCC')
+		, STRCMP ('abc','ab');
+	
+
+-- Q 3-1 get the value result of the operator if it's end with 'y' and started with 'c'
+-- where Like + regular expression 
+		
+SELECT
+	NAME,
+	NAME LIKE '%y',
+	NAME regexp '^c'
+FROM category; 
+
+SELECT first_name or '' or last_name OR 1
+FROM customer;
+
+-- -------------------------------------------------------------------------------------------------------------------
+-- Q4. print the new value changing the name (type char)
+
+-- A1. used replace( TOO easy way to resolve )
+SELECT first_name, REPLACE(first_name, 'BA','DA')FROM customer;
+
+-- A2. double replace (AT ONCE! , and failed ... )
+-- it is NOT POSSIBLE connect between two queries with 'AND'
+
+SELECT first_name, REPLACE(first_name,  'PH', 'TH' and REPLACE(FIRST_name,'NI','NA')) 
+FROM customer
+ORDER BY first_name;
+
+-- A2. double replace : module answer
+-- the position of the column, put the replace operator!
+
+SELECT first_name, 
+REPLACE(REPLACE (first_name,  'PH', 'TH'),'NI','NA')
+FROM customer
+ORDER BY first_name;
+
+
+-- ------------------------------------------------------------------------------------------------------------------
+
+
+-- Q5 : with the insert operator, put the text at the specific location
+-- 9 means location value and 0 is the length of the text to be deleted 
+
+SELECT 'goodbye world' , INSERT ('goodbye world', 9, 0. ,'cruel ' );
+
+-- Q 5-1 : TItle change with NICE (in the place of ' ')
+SELECT title 
+FROM film;  
+SELECT title, 
+INSERT ( title, POSITION(' ' IN title), 0,' NICE ')
+FROM film;
+
+-- Q 5-2 : SUBSTRIng() email is the name of column and 3 means the place 
+SELECT email, SUBSTRING(email, 3)
+, SUBSTR(email,3,3)
+FROM customer;
+
+
+-- --------------------------------------------------------------------------------------------------------------------
+
+-- Q6 : substring (column name , Start.value , end.value)
+substring(column name , startlocation ~end)
+
+SELECT SUBSTR(email ,1, LOCATE ('@', email)-1) AS address
+, SUBSTR(email, LOCATE('@' , email)+1) AS domain
+FROM customer;
+
+-- 6-1 LEFT , RIGHT function  / Extracting the value standadization with the specific character
+-- left(column name , position) : searching from left
+-- right(column name , columnlength - position) : searching from right 
+
+SELECT email, POSITION('@' IN email)
+, LEFT( email, POSITION ('@' IN email)-1) -- 
+, RIGHT(email, CHAR_LENGTH(email) - POSITION('@' IN email))
+FROM customer;
+
+
+
+
+
