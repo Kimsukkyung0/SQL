@@ -1,0 +1,131 @@
+-- 05/11 ch6 집합연산자 (set, except, intersect)
+-- SET 
+
+SELECT 1 as num, 'abc' as str
+
+union
+
+SELECT 9 AS num, 'wdaq' AS str
+
+
+SELECT 1 AS num, 'abc' AS str;
+
+
+-- This is the constructor connecting multiple queries by UNION
+
+-- Through the UNION ALL, the basic function (remove the duplication values) could be allowed and ignored
+
+-- the name of column is lead by the first query , therefore if the developer want to change the name of query should be declared at the first row
+
+
+-- UNION + Regular expression 
+-- Q1 : Find the names started with 'j' or 'd' from both tables 
+
+SELECT A.first_name AS Name , A.last_name AS Last name FROM customer A
+
+WHERE A.first_name REGEXP ('^[jd]')
+
+UNION
+
+select B.first_name, B.last_name FROM actor B
+
+WHERE B.first_name REGEXP ('^[jd]');
+
+-- Q2 : find names with sub-query
+
+SELECT U.* -- defining the temp.arrange 
+FROM ( SELECT A.first_name AS name , A.last_name AS Last name FROM customer A
+
+UNION
+
+select B.first_name, B.last_name FROM actor B
+
+)
+
+WHERE U.first_name REGEXP ('^[jd]');
+
+
+-- initial J.D with seperated regular expression however, it's applied at once at the end of the query
+
+
+-- Q3 : Find the people whos initial is 'J,D;
+-- resolved with using multiple regexp with subquery
+
+SELECT U.*
+
+FROM (
+
+SELECT A.first_name AS 이름 , A.last_name AS 성 FROM customer A
+
+UNION
+
+select B.first_name, B.last_name FROM actor B
+
+)
+
+WHERE U.first_name REGEXP '^j' AND U.last_name REGEXP '^D';
+
+
+-- Q4 : Find people having same name from actor and customer table
+-- With using count() function . in the class we used a couple of times this expression 
+-- but hardly understand how it works .
+-- count(*) has a quite similar function with limit() . same result.
+
+SELECT T.* from(
+
+SELECT first_name , last_name FROM customer
+
+WHERE first_name REGEXP '^j' AND last_name REGEXP '^D'
+
+UNION
+
+select first_name, last_name FROM actor
+
+WHERE first_name REGEXP '^j' AND last_name REGEXP '^D')T
+
+
+HAVING COUNT(3) ;
+
+
+
+
+-- Q5. intersect(My sql doesn't have intersect but oracle, so we tried to get the similar result by the functions we learnt)
+
+SELECT T.first_name, T.last_name from(
+
+SELECT first_name , last_name FROM customer
+
+WHERE first_name REGEXP '^j' AND last_name REGEXP '^D'
+
+UNION
+
+select first_name, last_name FROM actor
+
+WHERE first_name REGEXP '^j' AND last_name REGEXP '^D')T
+
+GROUP BY T.first_name, T.last_name
+
+HAVING COUNT(1) != 2;
+
+
+
+-- Q6.Except
+
+
+SELECT *
+
+from(
+
+SELECT first_name , last_name FROM customer
+
+WHERE first_name REGEXP '^j' AND last_name REGEXP '^D'
+
+UNION
+
+select first_name, last_name FROM actor
+
+WHERE first_name REGEXP '^j' AND last_name REGEXP '^D')T
+
+GROUP BY T.first_name, T.last_name
+
+HAVING not COUNT(1) > 1;
