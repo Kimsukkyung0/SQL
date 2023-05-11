@@ -11,7 +11,7 @@ SELECT 9 AS num, 'wdaq' AS str
 SELECT 1 AS num, 'abc' AS str;
 
 
--- This is the constructor connecting multiple queries by UNION
+-- This is a type of operator connecting multiple queries by UNION
 
 -- Through the UNION ALL, the basic function (remove the duplication values) could be allowed and ignored
 
