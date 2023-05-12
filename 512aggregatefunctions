@@ -1,0 +1,234 @@
+-- 5.12
+-- LIMIT
+-- the two way of using limit : limit(1) , limit(1,1) 
+-- function : after arrangement, limit the number of result value 
+-- if the parameters are two , the idx is started from 0 /
+-- useful for paging works 암시적 테이블, aggregate functions datediff, multiple grupozation , WITH ROLLUP
+-- 
+
+-- Today's note  : limit, 
+SELECT * , COUNT(*) FROM rental
+GROUP BY customer_id
+ORDER BY COUNT(*) DESC
+LIMIT 1;
+
+-- Q1. make the temporary table with using JOIN 
+
+SELECT A.customer_id, B.last_name, B.first_name, COUNT(*)
+FROM rental A
+inner JOIN customer B
+ON A.customer_id = B.customer_id
+GROUP BY B.customer_id
+ORDER BY COUNT(*) DESC
+LIMIT 10;
+
+-- Q2.  Find the person rented the largest number of dvd 
+
+SELECT A.customer_id, B.last_name, B.first_name
+FROM
+(SELECT * , COUNT(*) FROM rental
+GROUP BY customer_id
+ORDER BY COUNT(*) DESC
+LIMIT 1)A
+INNER JOIN customer B
+ON A.customer_id = B.customer_id;
+
+-- @3. Find the person rented the least number of dvd  
+
+SELECT A.customer_id, B.last_name, B.first_name, A.cnt
+FROM
+(SELECT customer_id, COUNT(1) cnt FROM rental
+GROUP BY customer_id
+ORDER BY COUNT(1)
+LIMIT 1)A
+INNER JOIN customer B
+ON A.customer_id = B.customer_id;
+
+-- --------------------------------------------
+SELECT customer_id, COUNT(1)
+FROM rental
+GROUP BY customer_id
+ORDER BY 2 DESC; 
+
+
+-- Q4. Find the people rented over 40 , print the column (pk, f.name, l.name and numbers)having the value
+-- 암시적 테이블->영어로 뭐라는지 모르겠다 which means the values printed on the console but didn't updated with DML
+-- just including temporary values combined by the query without GROUP BY!
+
+SELECT A.customer_id, A.first_name, A.last_name , B.cnt
+FROM 
+( SELECT customer_id, COUNT(1) cnt FROM rental
+GROUP BY customer_id
+HAVING COUNT(*)>=40
+)B
+INNER JOIN customer A
+ON B.customer_id = A.customer_id
+ORDER BY b.cnt DESC;
+
+-- Q 4-1. aggregate function 
+--  it might cause the error such as 1140/ unless it used with group by
+
+SELECT MAX(amount), MIN(amount) FROM payment;
+SELECT customer_id, MAX(amount), MIN(amount), AVG(amount), SUM(amount)/COUNT(amount)
+FROM payment
+ORDER BY AVG(amount);
+
+-- Q.5 Fine the number of people actually visited and used the rental service
+
+SELECT COUNT(customer_id)
+, COUNT(DISTINCT customer_id)
+FROM payment;
+
+-- Q6. else if there is contained NULL value,
+-- should use this combination . first, if column name is in count(),
+-- use where is null syntax . it can except the nulls
+
+SELECT COUNT(*), COUNT(RETURN_DATE), COUNT(1) 
+FROM rental
+WHERE return_date IS NULL;
+
+-- Q7. who's the person return the item lately
+SELECT max(DATEDIFF(return_date, rental_date))
+FROM rental;
+
+--Q8.the information of customer 
+(Trying)
+
+-- A8
+SELECT A.customer_id, B.first_name, B.last_name, DATEDIFF(A.return_date, A.rental_date) AS dd
+FROM (
+SELECT * FROM rental
+group by customer_id
+)A
+INNER join customer B 
+ON A.customer_id = B.customer_id;
+
+-- A8-1 : 
+SELECT A.customer_id, B.first_name, B.last_name, DATEDIFF(A.return_date, A.rental_date)
+FROM (
+	SELECT DISTINC T customer_id 
+	FROM rental
+	WHERE datediff(A.return_date, A.rental_date) = 
+	( sELECT MAX (datediff(A.return_date, A.rental_date))
+		FROM rental )A
+INNER join customer B 
+ON A.customer_id = B.customer_id
+ORDER BY b.customer_id;
+
+
+-- MULTIPLE GROUPOZATION
+
+-- Q9 the numbers of appeared in movies of actors by rating p.216
+SELECT A.actor_id, B.rating, COUNT(1) cnt
+FROM film_actor A
+INNER JOIN film B
+ON A.film_id = B.film_id
+GROUP BY A.actor_id, B.rating
+ORDER BY cnt DESC
+;
+
+-- Q10 the numbers of appeared in movies of actors by categories
+-- I failed to get the result as much as i intended 
+-- however Q10 and Q10-1 are the same 
+
+SELECT distinct A.actor_id, C.category_id , D.name, COUNT(actor_id) cnt
+FROM film_actor A
+INNER JOIN film B
+ON A.film_id = B.film_id
+INNER JOIN film_category C
+ON A.film_id = C.film_id
+INNER JOIN category D
+ON C.category_id = D.category_id
+GROUP BY A.Actor_id, C.category_id;
+
+
+-- A10-1
+SELECT A.actor_id, b.category_id ,c.name, COUNT(actor_id) cnt
+FROM film_actor A
+INNER JOIN film_category b
+ON A.film_id = b.film_id
+INNER JOIN category c
+ON b.category_id = c.category_id
+GROUP BY A.Actor_id, c.category_id;
+
+-- model answer (using subquery and printed all the names and titles)
+
+SELECT y.actor_id, y.first_name, y.last_name, X.category_Id,X.name, z.cnt
+FROM(
+	SELECT A.actor_id, C.category_id, COUNT(1) cnt
+	FROM film_actor A
+	INNER JOIN film_category C
+	ON A.film_id = C.film_id
+	GROUP BY A.actor_id, C.category_id
+)z
+INNER JOIN actor Y
+ON y.actor_id = Z.actor_id
+INNER JOIN category X
+ON Z.category_id = X.category_id
+ORDER BY y.actor_id ; 
+
+-- Q11 . numbers of rent by year 
+-- my query was incompleted due to the way i thought approaching to solve 
+
+
+SELECT YEAR(c.rental_date),COUNT(c.rental_date)
+FROM film A
+INNER JOIN inventory B
+ON A.film_id = B.film_id
+INNER JOIN rental C
+ON B.inventory_id = C.inventory_id ; 
+
+
+-- Q11-1 Model answer + concat (automatically comverted with concat)
+
+SELECT concat(YEAR(rental_date), '년') AS `year`,COUNT(rental_date)
+FROM rental
+GROUP BY YEAR(rental_date);
+
+-- WITH ROLLUP : can get the result with subtotal, and total with arrangement
+-- however in fact, to interconnect between java and sql, it is tricky to manage the data 
+-- if it's possible, don't calculate and make a burden on program in DB!
+
+SELECT fa.actor_id, f.rating, COUNT(1) cnt
+FROM film_actor fa
+INNER JOIN film f
+ON fa.film_id = f.film_id
+GROUP BY fa.actor_id, f.rating WITH ROLLUP;
+
+
+-- Q12 the actors appeared over 9 times in the movie rating only G, PG 
+
+SELECT A.rating, B.actor_id, COUNT(actor_id) cnt
+FROM film A
+INNER JOIN film_actor B
+ON A.film_id = B.film_id
+INNER JOIN film_category C
+ON A.film_id = C.film_id
+WHERE rating IN ('G','PG')
+
+GROUP BY actor_id,rating
+HAVING cnt > 9
+ORDER BY cnt;
+
+-- practice 8.5.1
+SELECT COUNT(*) 
+FROM payment;
+-- > 16,044
+
+-- practice 8.5.2
+SELECT customer_id, COUNT(customer_id),SUM(amount) 
+FROM payment 
+GROUP BY customer_id ;
+
+-- practice 8.5.3 
+
+SELECT customer_id, COUNT(customer_id) ci,SUM(amount)
+FROM payment
+GROUP BY customer_id
+having ci >=40; 
+
+
+
+
+
+
