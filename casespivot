@@ -1,0 +1,90 @@
+-- (1) case syntax
+-- : 
+SELECT
+	customer_id ,active ,case
+		when active = 1
+		then 'activated'
+		ELSE 'inactivated'
+	END active_str
+	, if(active = 1, 'activated', 'inactivated') active_str2
+FROM customer;
+
+	-- if(a, a, a) seems pretty similar with ternary operator, but it is not possible to expand with multiple syntaxes
+	-- However, case syntax is able to expand with when and then
+
+
+-- pg 전체 이용, nc - 17 17세 청소년이상, pg-13 13세이상
+-- R은 청소년관람불가
+
+SELECT 
+	case 
+	when rating IN ('pg', 'g')	then 'GENERAL AUDIENCES RATED'
+	when rating = 'nc-17' then 'No Children Under 17 Admitted'
+	when rating = 'pg-13' then 'Parental Guidance'
+	ELSE 'R-restricted'
+	END rating_str
+ FROM film; 
+
+-- weakeness of select __column name is that can not use IN .therefore if want to deal with the multiple values, might be have to use couple of values 
+
+SELECT *, 
+	case rating	when 'pg' then '전체이용가'
+					when 'g' then '전체이용가'
+					when 'nc-17' then '17세 이상'
+					when 'pg-13' then '13세 이상'
+	ELSE '청소년 관람불가'
+	END rating_str
+ FROM film; 
+ 
+ -- Q first_name 과 성, 그리고 대여수 
+ -- 새로운 행을 하나 더 만든다는 개념이 생소했음 
+
+SELECT B.last_name, B.first_name, 
+B.active , case when B.active = 0 then 0 
+else COUNT(A.customer_id)
+END num_rentals
+FROM rental A
+INNER JOIN customer B
+ON A.customer_id = B.customer_id
+GROUP BY A.customer_id
+ORDER BY active
+;
+-- 상관 서브쿼리(책에있는 내용임) 동일한 결과에 연산량이 상대적으로 많아
+-- 속도가 저하됨
+SELECT c.first_name, c.last_name
+	, case when active = 0 them 0
+		ELSE(SELECT COUNT(*) FROM rental r
+		WHERE r.customer_id = c.customer_id
+			)
+	END num_rentals
+FROM customer c;
+
+-- Q rental 테이블에서 2005-05, 06,07월 8월까지 각 달의 렌탈수
+
+SELECT DATE_FORMAT(rental_date,'%y-%m'), COUNT(rental_date)
+FROM rental
+GROUP BY rental_date;
+
+-- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+SELECT DATE_FORMAT(rental_date, '%y-%m') mon, COUNT(rental_date) cnt
+FROM rental
+WHERE DATE_FORMAT(rental_date, '%y-%m') between '05-05' and '05-07'
+GROUP BY mon;
+
+-- 위의 피벗이 행으로 했다면, 여긴 자료들을 매번 열로 만듦
+
+SELECT 
+	SUM(
+		case DATE_FORMAT(rental_date, '%y-%m') when '2005-05' then 1 ELSE 0 END) May_rentals
+		
+	,SUM(
+		case DATE_FORMAT(rental_date, '%y-%m') when '2005-06' then 1 ELSE 0 END) June_rentals
+		
+	,SUM(
+		case DATE_FORMAT(rental_date, '%y-%m') when '2005-07' then 1 ELSE 0 END) July_rentals
+	
+	from rental
+	WHERE DATE_FORMAT(rental_date, '%y-%m') BETWEEN '2005-05' AND '2005-07';	
+  
+-- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
