@@ -1,0 +1,103 @@
+-- 5/15 subquery
+-- Q1. Get the customer information including (pk, f.name, l.name )who signed in lately
+-- A1 : noncorrelated subqueries 
+SELECT customer_id, last_name, first_name FROM customer
+WHERE customer_id 
+order by customer_id DESC
+LIMIT 1;
+
+-- Q2. get the values from city_id, city_name not from the india
+-- A1. The first answer : forgot to put ')' to close the syntax and on to connect two queries
+SELECT distinct A.city_id , A.city
+FROM city A 
+INNER JOIN(
+SELECT * FROM country 
+WHERE country NOT IN ('india')B; -- on 깜빡함 
+
+-- A2. Second answer : now set
+SELECT distinct A.city_id , A.city, B.country_id
+FROM city A 
+INNER JOIN(
+SELECT country_id FROM country 
+WHERE country NOT IN ('india'))B; 
+ON A.country_id = B.country_id;
+
+-- Q3. get the names of cities in Canada and Mexico
+-- A
+SELECT city_id, city
+FROM city
+WHERE country_id in (
+SELECT country_id FROM country
+WHERE country IN ('canada' , 'mexico'))
+ORDER BY city_id;
+
+-- Allconstructor
+
+SELECT * FROM payment
+WHERE amount = 0;
+
+SELECT * FROM customer 
+WHERE customer_id not in (
+SELECT customer_id FROM payment 
+WHERE amount = 0);
+
+
+-- Q4. the customers rented a video more than people living in united states, maxico, canada
+-- on the book, the writer used the join, but tried to use bunch of subqueries
+
+
+CREATE VIEW view_test_1 as(
+SELECT customer_id, COUNT(customer_id)
+FROM rental
+GROUP BY customer_id
+HAVING COUNT(customer_id) > all( -- With the ALL  constructor , find the max value . which could be compared with ANY(MIN)
+SELECT COUNT(customer_id)
+FROM rental 
+WHERE customer_id IN(
+	SELECT customer_id
+	FROM customer  -- With the customer ID , can be approached to the information
+	where address_id IN(
+		SELECT address_id
+		FROM address 
+		WHERE city_id IN( -- get the address_ID (to be connected with customer information)
+			(SELECT city_id
+			FROM city -- getting the city id
+			WHERE country_id IN(
+				SELECT country_id FROM country 
+				WHERE country IN
+ 				('mexico', 'united states','canada') -- living in MX, USA, CA
+				 )
+			 )
+		)
+	)
+	
+)
+GROUP BY customer_id
+
+)
+);
+
+-- Q4. correlated subqueries : the last name 'Monroe' actor has appeared on movie rating PG
+-- A1. get the actor_id and movie _ids
+
+SELECT C.film_id, A.actor_id
+FROM actor A
+INNER JOIN film_actor B
+ON A.actor_id = B.actor_id
+INNER JOIN film C
+ON b. film_id = C.film_id
+WHERE A.Last_name = 'monroe'
+AND c.rating  = 'PG'
+;
+
+-- A2.
+SELECT * FROM actor
+WHERE (first_name, last_name ) IN
+	(	
+		SELECT first_name, last_name
+		FROM actor
+		WHERE last_name = 'monroe'
+		)
+	;
+	
+
