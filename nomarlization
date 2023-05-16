@@ -1,0 +1,127 @@
+-- 5.16 :  for the nomarlization practice, made a new database .
+
+CREATE TABLE t_deal(
+	id INT UNSIGNED AUTO_INCREMENT
+	, deal_date DATE NOT null
+	, price INT UNSIGNED NOT NULL DEFAULT 0
+	,
+	PRIMARY KEY(id)
+);
+
+-- table with the information of parts providers
+
+CREATE TABLE t_provider (
+	cd CHAR(1) PRIMARY key
+	, nm VARCHAR(10) NOT null
+);
+
+-- table with the information of coponents with code
+
+CREATE TABLE t_parts(
+	id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY
+	, nm VARCHAR(10) NOT NULL
+	, price INT UNSIGNED NOT null
+);
+
+--  Kind of main dataset 
+
+DROP TABLE t_deal_sub;
+CREATE TABLE t_deal_sub(
+	deal_id INT UNSIGNED 
+	, seq INT UNSIGNED
+	, provider_cd CHAR(1) NOT null 
+	, parts_id INT UNSIGNED NOT null
+	, quatity INT UNSIGNED NOT null
+	, 
+	PRIMARY KEY(deal_id,seq)
+	, FOREIGN KEY(provider_cd)  REFERENCES t_provider(cd)
+, FOREIGN KEY (parts_id) REFERENCES t_parts(id)
+, FOREIGN KEY (deal_id) REFERENCES t_deal(id)
+
+);
+-- INSERT the VALUE ----------------------
+
+
+INSERT INTO t_provider( cd,nm) VALUES ('A','alpha');
+INSERT INTO t_provider( cd,nm) VALUES ('B','Bravo');
+INSERT INTO t_provider( cd,nm) VALUES ('C','Charlie');
+
+INSERT INTO t_parts(nm,price) VALUES('Monitor', 200000),('Mouse', 10000),('Keyboard', 30000);
+
+INSERT INTO t_deal(deal_date,price) VALUES('2023-10-20',2000000)
+, ('2023-10-20',100000),('2023-10-20',300000)
+, ('2023-10-20',4000000),('2023-10-20',100000)
+, ('2023-10-22',300000),('2023-10-23',150000);
+
+INSERT INTO t_deal(deal_date) 
+VALUES('2023-10-20'), ('2023-10-20'), ('2023-10-22');
+
+ALTER TABLE t_deal MODIFY price INT NOT NULL DEFAULT 0;
+
+
+INSERT into t_deal_sub(deal_id , seq, provider_cd, parts_id, quatity)
+VALUES (1, 1, 'A', 1, 10), (1, 2, 'B', 2, 10),
+(1, 3, 'C', 3, 10)
+;
+INSERT into t_deal_sub(deal_id , seq, provider_cd, parts_id, quatity)
+VALUES (2, 1, 'A', 1, 20), (2, 2, 'B', 2, 10);
+
+INSERT into t_deal_sub(deal_id , seq, provider_cd, parts_id, quatity)
+VALUES (3, 1, 'A', 2, 30), (3, 2, 'c', 3, 5);
+
+
+-- !!! high quality update syntax1?!?
++ Through the inner join , group by , connect with the common value
+
+UPDATE t_deal A
+INNER JOIN (
+	SELECT deal_id, SUM(A.quatity * C.price) total_price
+	FROM t_deal_sub A
+	INNER JOIN t_parts C
+	ON A.parts_id = c.id
+	GROUP BY deal_id
+	)B
+	ON A.id = B.deal_id
+SET A.price = B.total_price; 
+
+-- A1 : made a main table holding all the values with the function JOIN
+
+SELECT A.deal_id AS 전표번호,
+B.deal_date AS 날짜, 
+C.cd AS 공급자, C.nm AS 공급자명,
+D.nm AS 부품명, D.price AS 단가, 
+A.quatity AS 수량,
+D.price * A.quatity AS 금액
+
+FROM t_deal_sub A
+INNER JOIN t_deal B
+ON B.id = A.seq
+INNER JOIN t_provider C
+ON C.cd = A.provider_cd
+INNER JOIN t_parts D
+ON A.parts_id = D.id
+order BY 전표번호,공급자;
+
+-- A2 : FAILED : tried to use the subqueries but it was on where .. make the resulf narrow
+
+SELECT * FROM t_deal
+WHERE price IN(
+	SELECT nm FROM t_parts
+	WHERE id IN (
+		SELECT deal_id FROM t_deal_sub
+		WHERE deal_id IN (1,2,3)
+		)
+	);
+
+-- A3 : FAILED : influx of new type of syntax??
+
+SELECT * FROM ()A, ()B WHERE =; 
+
+SELECT * FROM(SELECT * FROM t_deal_sub)A , (SELECT * FROM t_deal)B , (SELECT * FROM t_parts)C,
+(SELECT * FROM t_provider)D
+WHERE A.deal_id = B.id AND a.parts_id = C.id AND A.provider_cd = D.cd;
+
+-- printed every single informations ....TOOMUCH
+
+
+SELECT * FROM (SELECT deal_id, quatity FROM t_deal_sub )A inner JOIN (SELECT deal_date, price FROM t_deal)B ON A.deal_id = B.id
